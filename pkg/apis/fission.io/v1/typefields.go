@@ -323,10 +323,12 @@ type (
 	// Canary Config
 	CanaryConfigSpec struct {
 		Trigger TriggerReference `json:"triggerref"`
+		FunctionN string `json:"funcn"`
+		FunctionNminus1 string `json:"funcn-1"`
 		WeightIncrement int `json:"weightincrement"`
 		WeightIncrementDuration time.Duration `json:"duration"`
 		FailureThreshold int `json:"failurethreshold"`
-		FailureType int `json:"failureType"`
+		FailureType FailureType `json:"failureType"`
 	}
 
 	// trigger reference
