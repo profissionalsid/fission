@@ -176,6 +176,22 @@ func EnsureFissionCRDs(clientset *apiextensionsclient.Clientset) error {
 				},
 			},
 		},
+		// CanaryConfig: configuration for canary deployment of functions
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "canaryconfigs.fission.io",
+			},
+			Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
+				Group:   crdGroupName,
+				Version: crdVersion,
+				Scope:   apiextensionsv1beta1.NamespaceScoped,
+				Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
+					Kind:     "CanaryConfig",
+					Plural:   "canaryConfigs",
+					Singular: "canaryConfig",
+				},
+			},
+		},
 	}
 	for _, crd := range crds {
 		err := ensureCRD(clientset, &crd)

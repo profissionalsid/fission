@@ -152,6 +152,22 @@ type (
 
 		Items []MessageQueueTrigger `json:"items"`
 	}
+
+	// Canary Deployment Config
+	// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+	CanaryConfig struct {
+		metav1.TypeMeta `json:",inline"`
+		Metadata        metav1.ObjectMeta       `json:"metadata"`
+		Spec            CanaryConfigSpec `json:"spec"`
+	}
+
+	// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+	CanaryConfigList struct {
+		metav1.TypeMeta `json:",inline"`
+		Metadata        metav1.ListMeta `json:"metadata"`
+
+		Items []CanaryConfig `json:"items"`
+	}
 )
 
 // Each CRD type needs:
@@ -184,6 +200,9 @@ func (m *MessageQueueTrigger) GetObjectKind() schema.ObjectKind {
 func (p *Package) GetObjectKind() schema.ObjectKind {
 	return &p.TypeMeta
 }
+func (c *CanaryConfig) GetObjectKind() schema.ObjectKind {
+	return &c.TypeMeta
+}
 
 func (f *Function) GetObjectMeta() metav1.Object {
 	return &f.Metadata
@@ -205,6 +224,9 @@ func (m *MessageQueueTrigger) GetObjectMeta() metav1.Object {
 }
 func (p *Package) GetObjectMeta() metav1.Object {
 	return &p.Metadata
+}
+func (c *CanaryConfig) GetObjectMeta() metav1.Object {
+	return &c.Metadata
 }
 
 func (fl *FunctionList) GetObjectKind() schema.ObjectKind {
@@ -228,6 +250,9 @@ func (ml *MessageQueueTriggerList) GetObjectKind() schema.ObjectKind {
 func (pl *PackageList) GetObjectKind() schema.ObjectKind {
 	return &pl.TypeMeta
 }
+func (cl *CanaryConfigList) GetObjectKind() schema.ObjectKind {
+	return &cl.TypeMeta
+}
 
 func (fl *FunctionList) GetListMeta() metav1.ListInterface {
 	return &fl.Metadata
@@ -249,6 +274,9 @@ func (ml *MessageQueueTriggerList) GetListMeta() metav1.ListInterface {
 }
 func (pl *PackageList) GetListMeta() metav1.ListInterface {
 	return &pl.Metadata
+}
+func (cl *CanaryConfigList) GetListMeta() metav1.ListInterface {
+	return &cl.Metadata
 }
 
 func validateMetadata(field string, m metav1.ObjectMeta) error {

@@ -18,6 +18,7 @@ package v1
 
 import (
 	apiv1 "k8s.io/api/core/v1"
+	"time"
 )
 
 type (
@@ -314,5 +315,24 @@ type (
 	TimeTriggerSpec struct {
 		Cron              string `json:"cron"`
 		FunctionReference `json:"functionref"`
+	}
+
+
+	FailureType int
+
+	// Canary Config
+	CanaryConfigSpec struct {
+		Trigger TriggerReference `json:"triggerref"`
+		WeightIncrement int `json:"weightincrement"`
+		WeightIncrementDuration time.Duration `json:"duration"`
+		FailureThreshold int `json:"failurethreshold"`
+		FailureType int `json:"failureType"`
+	}
+
+	// trigger reference
+	TriggerReference struct {
+		Namespace string `json:"namespace"`
+		Name      string `json:"name"`
+		ResourceVersion string `json:"resourceversion,omitempty"`
 	}
 )

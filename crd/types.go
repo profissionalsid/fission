@@ -35,4 +35,6 @@ type (
 	TimeTriggerList            = fv1.TimeTriggerList
 	MessageQueueTrigger        = fv1.MessageQueueTrigger
 	MessageQueueTriggerList    = fv1.MessageQueueTriggerList
+	CanaryConfig	           = fv1.CanaryConfig
+	CanaryConfigList           = fv1.CanaryConfigList
 )
