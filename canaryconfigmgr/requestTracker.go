@@ -6,6 +6,8 @@ import (
 	"github.com/fission/fission/pkg/apis/fission.io/v1"
 )
 
+// TODO : Replace with APIs to prometheus to getMetrics
+
 type(
 	RequestTracker struct {
 		mutex *sync.Mutex
@@ -32,8 +34,8 @@ func (reqTracker *RequestTracker) set(triggerRef *v1.TriggerReference, failedReq
 
 	reqTracker.mutex.Lock()
 	defer reqTracker.mutex.Unlock()
-	value, ok := reqTracker.Counter[*triggerRef]
 
+	value, ok := reqTracker.Counter[*triggerRef]
 	if !ok {
 		value = &RequestCounter{}
 	}
@@ -48,4 +50,21 @@ func (reqTracker *RequestTracker) get(triggerRef *v1.TriggerReference) *RequestC
 	defer reqTracker.mutex.Unlock()
 
 	return reqTracker.Counter[*triggerRef]
+}
+
+func (reqTracker *RequestTracker) reset(triggerRef *v1.TriggerReference) {
+	reqTracker.mutex.Lock()
+	defer reqTracker.mutex.Unlock()
+
+	reqCounter := &RequestCounter{}
+	reqTracker.Counter[*triggerRef] = reqCounter
+}
+
+
+func calculatePercentageFailure(reqCounter *RequestCounter) int {
+	if reqCounter.TotalRequests != 0 {
+		return int(reqCounter.FailedRequests / reqCounter.TotalRequests * 100)
+	}
+
+	return 0
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/fission/fission/crd"
 	"time"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/gengo/testdata/a"
 )
 
 type canaryConfigMgr struct {
@@ -52,6 +51,9 @@ func MakeCanaryConfigMgr(fissionClient *crd.FissionClient, kubeClient *kubernete
 	configMgr.canaryConfigStore = store
 	configMgr.canaryConfigController = controller
 
+	// TODO : Also start a go routine on startup to restart processing all canaryConfigs in the event of router restart
+	// in the middle of incrementing weights of funcN and decrementing funcN-1
+
 	return configMgr
 }
 
@@ -66,6 +68,9 @@ func(canaryCfgMgr *canaryConfigMgr) initCanaryConfigController() (k8sCache.Store
 			},
 			DeleteFunc: func(obj interface{}) {
 				canaryConfig := obj.(*crd.CanaryConfig)
+				// TODO : Once a go routine is spawned inside `addCanaryConfig` function with `add` event, it's impossible
+				// to get the context of that go-routine when a `delete` event is received for the same canaryConfig.
+				// need to find a better way to kill those go routines
 				go canaryCfgMgr.deleteCanaryConfig(canaryConfig)
 			},
 			UpdateFunc: func(oldObj interface{}, newObj interface{}) {
@@ -85,6 +90,10 @@ func(canaryCfgMgr *canaryConfigMgr) addCanaryConfig(canaryConfig *crd.CanaryConf
 	for {
 		select {
 		case <- ticker.C:
+			// TODO : comment above deleteCanaryConfig function.
+			// every time we're woken up, we need to check if this canary config is still in the store,
+			// else, close(quit).
+
 			// every weightIncrementDuration, check if failureThreshold has reached.
 			// if yes, rollback.
 			// else, increment the weight percentage of funcN and decrement funcN-1 by `weightIncrement`
@@ -98,6 +107,7 @@ func(canaryCfgMgr *canaryConfigMgr) addCanaryConfig(canaryConfig *crd.CanaryConf
 
 
 func(canaryCfgMgr *canaryConfigMgr) processCanaryConfig(canaryConfig *crd.CanaryConfig, quit chan struct{}) {
+	// TODO : Use prometheus apis to get metrics
 	requestCounter := canaryCfgMgr.requestTracker.get(&canaryConfig.Spec.Trigger)
 
 	if requestCounter == nil || requestCounter.TotalRequests == 0 {
@@ -106,6 +116,7 @@ func(canaryCfgMgr *canaryConfigMgr) processCanaryConfig(canaryConfig *crd.Canary
 		return
 	}
 
+	// TODO : Use prometheus apis to get percentage failures
 	failurePercent := calculatePercentageFailure(requestCounter)
 
 	if failurePercent > canaryConfig.Spec.FailureThreshold {
@@ -118,6 +129,8 @@ func(canaryCfgMgr *canaryConfigMgr) processCanaryConfig(canaryConfig *crd.Canary
 	// time to increment the weight of functionN and decrement the weight of functionN-1 by `weightIncrement`
 	t, err := canaryCfgMgr.fissionClient.HTTPTriggers(canaryConfig.Metadata.Namespace).Get(canaryConfig.Spec.Trigger.Name)
 	if err != nil {
+		// TODO if err is NotFound, then close(quit) from this go-routine.
+
 		// nothing to do, because the trigger object is missing
 		return
 	}
@@ -135,6 +148,9 @@ func(canaryCfgMgr *canaryConfigMgr) processCanaryConfig(canaryConfig *crd.Canary
 		return
 	}
 
+	// if write is successful, reset the counters so the failure percentage can be calculated for next interval
+	canaryCfgMgr.requestTracker.reset(&canaryConfig.Spec.Trigger)
+
 	// if write was successful and if the functionN has reached 100% and functionN-1 0%, then quit, our job is done.
 	if functionWeights[canaryConfig.Spec.FunctionN] >= 100 {
 		close(quit)
@@ -142,10 +158,3 @@ func(canaryCfgMgr *canaryConfigMgr) processCanaryConfig(canaryConfig *crd.Canary
 }
 
 
-func calculatePercentageFailure(reqCounter *RequestCounter) int {
-	if reqCounter.TotalRequests != 0 {
-		return int(reqCounter.FailedRequests / reqCounter.TotalRequests * 100)
-	}
-
-	return 0
-}
