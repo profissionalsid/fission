@@ -7,6 +7,9 @@ import (
 )
 
 // TODO : Replace with APIs to prometheus to getMetrics
+// things to keep in mind :
+// 1. clock sync between prom server and router instances
+// 2. also fault tolerance when - 1. prom server is restarting/dead  2. somehow values are missing for that instant
 
 type(
 	RequestTracker struct {

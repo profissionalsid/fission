@@ -34,11 +34,15 @@ type canaryConfigMgr struct {
 	kubeClient        *kubernetes.Clientset
 	canaryConfigStore         k8sCache.Store
 	canaryConfigController    k8sCache.Controller
-	requestTracker *RequestTracker
+	requestTracker *RequestTracker // this is only for local testing.
+	promClient *PrometheusClient
 	crdClient         *rest.RESTClient
 }
 
 func MakeCanaryConfigMgr(fissionClient *crd.FissionClient, kubeClient *kubernetes.Clientset, crdClient *rest.RESTClient) (*canaryConfigMgr) {
+	// TODO : Use api end point of prometheus to verify it's target discovery is up even before we start this controller.
+	// GET /api/v1/status/config
+
 	configMgr := &canaryConfigMgr{
 		fissionClient: fissionClient,
 		kubeClient: kubeClient,
